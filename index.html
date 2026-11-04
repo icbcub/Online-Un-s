@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Un's Online</title>
+
+  <style>
+    [hidden] { display: none !important; }
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      transition: background-color .2s;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button {
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled { cursor: not-allowed; opacity: .6; }
+
+    input[type="text"], input[type="password"],
+    input[type="number"], textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+    }
+
+    textarea { resize: vertical; }
+    label { display: block; margin: 12px 0 6px; }
+
+    .center-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: min(420px, 100%);
+      padding: 26px;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 8px 25px #0002;
+    }
+
+    .card h1, .card h2 { text-align: center; }
+    .primary { width: 100%; margin-top: 16px; background: #444; color: white; }
+    .error { min-height: 1.2em; color: #b00020; }
+
+    .colorful {
+      color: #ff4f9a;
+      font-weight: 1000;
+      letter-spacing: 2px;
+      text-align: center;
+      text-shadow: 2px 2px #ffd166, 4px 4px #7b61ff;
+      -webkit-text-stroke: 1px white;
+    }
+
+    #welcomeMessage { font-size: clamp(2rem, 7vw, 4rem); }
+    #gamesHeading { margin: 10px; font-size: 3rem; }
+
+    #homeView, #gamesView, #shopView, #adminView, #updatesView {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #moneyDisplay { font-weight: bold; }
+    #playerName { text-align: center; font-size: 1.2rem; font-weight: bold; }
+    #updatesButton { background: #ffd166; color: #222; }
+
+    #mainMenu {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+
+    #mainMenu button {
+      min-width: 130px;
+      color: white;
+      font-size: 1.1rem;
+      pointer-events: auto;
+    }
+
+    #gamesButton { background: #ff4f9a; }
+    #shopButton { background: #7b61ff; }
+    #adminsButton { background: #00a878; }
+    .back-button { background: #333; color: white; }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      max-width: 1000px;
+      margin: 25px auto;
+    }
+
+    .game-slot, .shop-item {
+      padding: 14px;
+      border-radius: 14px;
+      background: white;
+      text-align: center;
+      box-shadow: 0 4px 14px #0002;
+    }
+
+    .game-slot img, .shop-item img {
+      display: block;
+      width: 100%;
+      height: 120px;
+      border-radius: 10px;
+      background: #eee;
+      object-fit: cover;
+    }
+
+    .game-slot button { background: #ff4f9a; color: white; }
+
+    .shop-scroll {
+      width: min(900px, 100%);
+      height: min(72vh, 700px);
+      margin: 20px auto;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .shop-item button { background: #7b61ff; color: white; }
+
+    .notice {
+      position: fixed;
+      z-index: 5;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: calc(100% - 24px);
+      padding: 12px 18px;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      text-align: center;
+      box-shadow: 0 4px 15px #0003;
+    }
+
+    .admin-list {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0;
+      list-style: none;
+    }
+
+    .admin-list li {
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 9px;
+      background: white;
+    }
+
+    .admin-actions { width: min(600px, 100%); margin: 20px auto; }
+
+    .admin-actions > button {
+      margin: 4px;
+      background: #00a878;
+      color: white;
+    }
+
+    #adminActionForm {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 14px;
+      background: white;
+      box-shadow: 0 4px 14px #0002;
+    }
+
+    #adminActionSubmit { margin-top: 14px; background: #7b61ff; color: white; }
+    #adminActionStatus { min-height: 1.2em; text-align: center; font-weight: bold; }
+
+    @media (max-width: 520px) {
+      .shop-grid { grid-template-columns: 1fr; }
+      #mainMenu { position: static; min-height: 55vh; }
+    }
+  </style>
+</head>
+
+<body style="background:#fff">
+  <main id="loginView" class="center-screen">
+    <form id="loginForm" class="card" novalidate autocomplete="off">
+      <h1>Un's Online Login</h1>
+
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text"
+             autocomplete="username" spellcheck="false">
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password"
+             autocomplete="current-password">
+
+      <label for="showPassword">
+        <input id="showPassword" type="checkbox">
+        Show password
+      </label>
+
+      <p id="loginError" class="error" aria-live="polite"></p>
+      <button id="loginButton" class="primary" type="submit">Log in</button>
+    </form>
+  </main>
+
+  <main id="nameView" class="center-screen" hidden>
+    <form id="nameForm" class="card" novalidate>
+      <h2>What should we call you?</h2>
+      <label for="showNameInput">Show name</label>
+      <input id="showNameInput" type="text" maxlength="30">
+      <p id="nameError" class="error" aria-live="polite"></p>
+      <button class="primary" type="submit">Continue</button>
+    </form>
+  </main>
+
+  <main id="welcomeView" class="center-screen" hidden>
+    <div>
+      <h1 id="welcomeMessage" class="colorful">Welcome to Un's Online</h1>
+      <button id="welcomeStart" class="primary" style="width:auto">Start</button>
+    </div>
+  </main>
+
+  <section id="homeView" hidden>
+    <div class="topbar">
+      <div id="moneyDisplay">Money ( 0 )</div>
+      <button id="updatesButton" type="button">Updates</button>
+      <div id="playerName"></div>
+      <button id="logoutButton" class="back-button" type="button">Log out</button>
+    </div>
+
+    <nav id="mainMenu" aria-label="Main menu">
+      <button id="gamesButton" type="button">Games</button>
+      <button id="shopButton" type="button">Shop</button>
+      <button id="adminsButton" type="button" hidden>Admins</button>
+    </nav>
+  </section>
+
+  <section id="gamesView" hidden>
+    <div class="topbar">
+      <button class="back-button" data-home type="button">Back</button>
+      <h1 id="gamesHeading" class="colorful">GAMES</h1>
+      <span></span>
+    </div>
+    <p id="gameNotice" class="notice" hidden aria-live="polite"></p>
+    <div id="gamesGrid" class="games-grid"></div>
+  </section>
+
+  <section id="shopView" hidden>
+    <div class="topbar">
+      <button class="back-button" data-home type="button">Back</button>
+      <h1>Shop</h1>
+      <div id="shopMoney"></div>
+    </div>
+    <p id="shopNotice" class="notice" hidden aria-live="polite"></p>
+    <div class="shop-scroll"><div id="shopGrid" class="shop-grid"></div></div>
+  </section>
+
+  <section id="adminView" hidden>
+    <div class="topbar">
+      <button class="back-button" data-home type="button">Back</button>
+      <h1>Admin</h1>
+      <span></span>
+    </div>
+
+    <div class="admin-actions">
+      <button id="sendCashButton" type="button">Send Cash</button>
+      <button id="subtractCashButton" type="button">Subtract Money</button>
+      <button id="sendMessageButton" type="button">Send Message</button>
+
+      <form id="adminActionForm" hidden novalidate>
+        <label for="targetUsername">Account username</label>
+        <input id="targetUsername" type="text" autocomplete="off">
+
+        <div id="amountField" hidden>
+          <label for="adminAmount">Amount</label>
+          <input id="adminAmount" type="number" min="1" step="1">
+        </div>
+
+        <div id="messageField" hidden>
+          <label for="adminMessage">Message</label>
+          <textarea id="adminMessage" rows="4" maxlength="500"></textarea>
+        </div>
+
+        <button id="adminActionSubmit" type="submit">Submit</button>
+      </form>
+      <p id="adminActionStatus" aria-live="polite"></p>
+    </div>
+
+    <h2 style="text-align:center">Bought Items</h2>
+    <ul id="adminPurchaseList" class="admin-list"></ul>
+  </section>
+
+  <section id="updatesView" hidden>
+    <div class="topbar">
+      <button class="back-button" data-home type="button">Back</button>
+      <h1>Updates</h1>
+      <span></span>
+    </div>
+    <ul id="userMessagesList" class="admin-list"></ul>
+  </section>
+
+  <div id="giftNotice" class="notice" hidden role="status"></div>
+
+  <script>
+    "use strict";
+
+    const USERS = {
+      "Michelle_Balogun": "The_Mich_0",
+      "Ranye_Ran1": "Ran_Sis.0",
+      "Zoey_Nwokolo": "The_Zoeey9",
+      "Uzo_Maka": "Uzo_Maker",
+      "Zeerah_Kambis": "Zee.rah",
+      "Fire_Girl": "Rodeo661",
+      "Imisi_Baba": "Babz",
+      "Ugochi_Enwere": "@dm!n",
+      "Tester": "abc"
+    };
+
+    let account = null;
+
+    const moneyKey = username => `unMoney_${username}`;
+    const nameKey = username => `unShowName_${username}`;
+    const boughtKey = username => `unBoughtItems_${username}`;
+    const giftKey = username => `unFirstLoginGift_${username}`;
+    const messagesKey = username => `unMessages_${username}`;
+
+    const viewIds = [
+      "loginView", "nameView", "welcomeView", "homeView",
+      "gamesView", "shopView", "adminView", "updatesView"
+    ];
+
+    function showView(id) {
+      viewIds.forEach(viewId => {
+        document.getElementById(viewId).hidden = viewId !== id;
+      });
+    }
+
+    function getMoneyFor(username) {
+      return Number(localStorage.getItem(moneyKey(username)) || 0);
+    }
+
+    function getMoney() {
+      return account ? getMoneyFor(account) : 0;
+    }
+
+    function updateMoney() {
+      if (!account) return;
+      document.getElementById("moneyDisplay").textContent =
+        `Money ( ${getMoney()} )`;
+      document.getElementById("shopMoney").textContent =
+        `Money ( ${getMoney()} )`;
+    }
+
+    function setMoneyFor(username, amount) {
+      localStorage.setItem(moneyKey(username), String(amount));
+      if (username === account) updateMoney();
+    }
+
+    function setMoney(amount) {
+      setMoneyFor(account, amount);
+    }
+
+    function showTimedNotice(element, text, duration) {
+      element.textContent = text;
+      element.hidden = false;
+      clearTimeout(element._timer);
+      element._timer = setTimeout(() => {
+        element.hidden = true;
+      }, duration);
+    }
+
+    function readArray(key) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(value) ? value : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function openHome() {
+      document.body.style.backgroundColor = "#89CFF0";
+      document.getElementById("playerName").textContent =
+        localStorage.getItem(nameKey(account)) || account;
+      updateMoney();
+      showView("homeView");
+    }
+
+    function awardFirstLoginGift() {
+      if (localStorage.getItem(giftKey(account)) !== "sent") {
+        setMoney(getMoney() + 1000);
+        localStorage.setItem(giftKey(account), "sent");
+        showTimedNotice(
+          document.getElementById("giftNotice"),
+          "1000 Un's sent from the Un's team",
+          2000
+        );
+      }
+    }
+
+    function renderUserMessages() {
+      const list = document.getElementById("userMessagesList");
+      const messages = readArray(messagesKey(account));
+      list.replaceChildren();
+
+      if (!messages.length) {
+        const row = document.createElement("li");
+        row.textContent = "You have no updates.";
+        list.appendChild(row);
+        return;
+      }
+
+      messages.slice().reverse().forEach(message => {
+        const row = document.createElement("li");
+        row.textContent = `${message.date} — ${message.text}`;
+        list.appendChild(row);
+      });
+    }
+
+    /*
+      Password visibility is controlled by the checkbox's change event.
+      The form's submit handler prevents the browser from navigating/reloading.
+    */
+    const passwordInput = document.getElementById("password");
+    const showPasswordCheckbox = document.getElementById("showPassword");
+
+    showPasswordCheckbox.addEventListener("change", () => {
+      passwordInput.type = showPasswordCheckbox.checked ? "text" : "password";
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const enteredName = document.getElementById("username").value.trim();
+      const enteredPassword = passwordInput.value;
+      const error = document.getElementById("loginError");
+
+      if (!enteredName || !enteredPassword) {
+        error.textContent = "Enter both your username and password.";
+        return;
+      }
+
+      const approvedName = Object.keys(USERS).find(name =>
+        name.toLowerCase() === enteredName.toLowerCase()
+      );
+
+      if (!approvedName || USERS[approvedName] !== enteredPassword) {
+        error.textContent = "Username or password is incorrect.";
+        return;
+      }
+
+      account = approvedName;
+      localStorage.setItem("unCurrentAccount", account);
+      error.textContent = "";
+      document.body.style.backgroundColor = "#d9f7d9";
+
+      document.getElementById("adminsButton").hidden =
+        account !== "Ugochi_Enwere";
+
+      awardFirstLoginGift();
+
+      document.getElementById("showNameInput").value =
+        localStorage.getItem(nameKey(account)) || "";
+
+      showView("nameView");
+    });
+
+    document.getElementById("nameForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const showName = document.getElementById("showNameInput").value.trim();
+      const error = document.getElementById("nameError");
+
+      if (!showName) {
+        error.textContent = "Enter a show name.";
+        return;
+      }
+
+      localStorage.setItem(nameKey(account), showName);
+      error.textContent = "";
+      document.body.style.backgroundColor = "#ffb6c1";
+      showView("welcomeView");
+    });
+
+    document.getElementById("welcomeStart").addEventListener("click", openHome);
+
+    document.getElementById("gamesButton").addEventListener("click", () => {
+      document.getElementById("gameNotice").hidden = true;
+      showView("gamesView");
+    });
+
+    document.getElementById("shopButton").addEventListener("click", () => {
+      renderShop();
+      showView("shopView");
+    });
+
+    document.getElementById("updatesButton").addEventListener("click", () => {
+      renderUserMessages();
+      showView("updatesView");
+    });
+
+    document.getElementById("adminsButton").addEventListener("click", () => {
+      if (account !== "Ugochi_Enwere") return;
+
+      document.getElementById("adminActionForm").hidden = true;
+      document.getElementById("adminActionStatus").textContent = "";
+      renderAdminPurchases();
+      showView("adminView");
+    });
+
+    document.querySelectorAll("[data-home]").forEach(button => {
+      button.addEventListener("click", openHome);
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      localStorage.removeItem("unCurrentAccount");
+      account = null;
+      location.href = "index.html";
+    });
+
+    let adminAction = "";
+
+    function prepareAdminAction(action) {
+      if (account !== "Ugochi_Enwere") return;
+
+      adminAction = action;
+      document.getElementById("adminActionForm").hidden = false;
+      document.getElementById("amountField").hidden = action === "message";
+      document.getElementById("messageField").hidden = action !== "message";
+      document.getElementById("adminActionStatus").textContent = "";
+
+      document.getElementById("adminActionSubmit").textContent = {
+        send: "Send Cash",
+        subtract: "Subtract Money",
+        message: "Send Message"
+      }[action];
+    }
+
+    document.getElementById("sendCashButton").addEventListener("click", () =>
+      prepareAdminAction("send")
+    );
+
+    document.getElementById("subtractCashButton").addEventListener("click", () =>
+      prepareAdminAction("subtract")
+    );
+
+    document.getElementById("sendMessageButton").addEventListener("click", () =>
+      prepareAdminAction("message")
+    );
+
+    document.getElementById("adminActionForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const status = document.getElementById("adminActionStatus");
+
+      if (account !== "Ugochi_Enwere") {
+        status.textContent = "This action is not allowed.";
+        return;
+      }
+
+      const enteredUsername =
+        document.getElementById("targetUsername").value.trim();
+
+      const recipient = Object.keys(USERS).find(username =>
+        username.toLowerCase() === enteredUsername.toLowerCase()
+      );
+
+      if (!recipient) {
+        status.textContent = "Enter an approved account username.";
+        return;
+      }
+
+      if (adminAction === "message") {
+        const text = document.getElementById("adminMessage").value.trim();
+
+        if (!text) {
+          status.textContent = "Enter a message.";
+          return;
+        }
+
+        const messages = readArray(messagesKey(recipient));
+        messages.push({
+          text,
+          date: new Date().toLocaleString(),
+          sender: "Ugochi_Enwere"
+        });
+
+        localStorage.setItem(messagesKey(recipient), JSON.stringify(messages));
+        status.textContent = `Message sent to ${recipient}.`;
+        document.getElementById("adminActionForm").reset();
+        return;
+      }
+
+      const amount = Number(document.getElementById("adminAmount").value);
+
+      if (!Number.isSafeInteger(amount) || amount < 1) {
+        status.textContent = "Enter a positive whole-number amount.";
+        return;
+      }
+
+      const balance = getMoneyFor(recipient);
+
+      if (!Number.isSafeInteger(balance) || balance < 0) {
+        status.textContent = "Could not read that account's balance.";
+        return;
+      }
+
+      if (adminAction === "subtract") {
+        if (amount > balance) {
+          status.textContent = `That account only has ${balance} Un's.`;
+          return;
+        }
+
+        setMoneyFor(recipient, balance - amount);
+        status.textContent =
+          `Subtracted ${amount} Un's from ${recipient}. New balance: ${balance - amount}.`;
+      } else {
+        if (!Number.isSafeInteger(balance + amount)) {
+          status.textContent = "That amount is too large.";
+          return;
+        }
+
+        setMoneyFor(recipient, balance + amount);
+        status.textContent =
+          `Sent ${amount} Un's to ${recipient}. New balance: ${balance + amount}.`;
+      }
+
+      document.getElementById("adminActionForm").reset();
+    });
+
+    const gameNames = [
+      "Flappy Bird", "Bumpy Ride", "Catch the Stars", "Game 4", "Game 5"
+    ];
+
+    const gameImages = [
+      "https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=500&q=80",
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=500&q=80",
+      "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=500&q=80",
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=500&q=80",
+      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80"
+    ];
+
+    gameNames.forEach((gameName, index) => {
+      const card = document.createElement("article");
+      card.className = "game-slot";
+
+      const image = document.createElement("img");
+      image.src = gameImages[index];
+      image.alt = gameName;
+
+      const title = document.createElement("h3");
+      title.textContent = gameName;
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Start";
+
+      button.addEventListener("click", () => {
+        if (index > 2) {
+          showTimedNotice(
+            document.getElementById("gameNotice"),
+            "Coming soon!",
+            2000
+          );
+          return;
+        }
+
+        const fee = [500, 1000, 500][index];
+
+        if (getMoney() < fee) {
+          showTimedNotice(
+            document.getElementById("gameNotice"),
+            "Insufficient Funds, Can't play game",
+            2500
+          );
+          return;
+        }
+
+        setMoney(getMoney() - fee);
+
+        if (index === 0) {
+          location.href = "game1.html";
+        } else if (index === 1) {
+          location.href = "game2.html";
+        } else {
+          sessionStorage.setItem("unGame3PaidAccount", account);
+          location.href = "game3.html";
+        }
+      });
+
+      card.append(image, title, button);
+      document.getElementById("gamesGrid").appendChild(card);
+    });
+
+    const shopItems = [
+      { name: "Store-Bought Chin Chin", image: "chinchin.gif", price: 1000 },
+      { name: "Store-Bought Plantain chips", image: "tannies.gif", price: 750 },
+      { name: "So Yummy Popcorn", image: "popcorn.gif", price: 300 },
+      { name: "Mc Vities Original Bisuit", image: "m.gif", price: 500 },
+      { name: "Fully Stapled DIY Book", image: "book.gif", price: 500 },
+      { name: "Nutri-Milk 210ml", image: "nutri-milk.gif", price: 850 },
+      { name: "Ribena", image: "ribena.gif", price: 300 },
+      { name: "Imported CapriSun", image: "drink.gif", price: 500 },
+      { name: "Store-Bought Chocolate Cookies", image: "m.gif", price: 900 },
+      { name: "Paper (5 pieces)", image: "book.gif", price: 500 }
+    ];
+
+    function renderShop() {
+      const grid = document.getElementById("shopGrid");
+      const now = Date.now();
+      const bought = readArray(boughtKey(account));
+
+      const activePurchases = bought.filter(entry =>
+        Number.isFinite(entry.purchasedAt) &&
+        now - entry.purchasedAt < 30000
+      );
+
+      if (activePurchases.length !== bought.length) {
+        localStorage.setItem(boughtKey(account), JSON.stringify(activePurchases));
+      }
+
+      grid.replaceChildren();
+
+      shopItems.forEach(item => {
+        const purchase = activePurchases.find(entry => entry.name === item.name);
+        const remaining = purchase
+          ? Math.max(0, 30000 - (now - purchase.purchasedAt))
+          : 0;
+
+        const card = document.createElement("article");
+        card.className = "shop-item";
+
+        const image = document.createElement("img");
+        image.src = item.image;
+        image.alt = item.name;
+
+        const title = document.createElement("h3");
+        title.textContent = item.name;
+
+        const price = document.createElement("p");
+        price.textContent = `${item.price} Un's`;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = purchase ? "Bought" : "Buy";
+        button.disabled = Boolean(purchase);
+        button.addEventListener("click", () => buyItem(item));
+
+        card.append(image, title, price, button);
+        grid.appendChild(card);
+
+        if (purchase) {
+          setTimeout(() => {
+            if (account && !document.getElementById("shopView").hidden) {
+              renderShop();
+            }
+          }, remaining + 50);
+        }
+      });
+
+      updateMoney();
+    }
+
+    function buyItem(item) {
+      const personal = readArray(boughtKey(account));
+      const now = Date.now();
+
+      const stillCoolingDown = personal.some(entry =>
+        entry.name === item.name &&
+        Number.isFinite(entry.purchasedAt) &&
+        now - entry.purchasedAt < 30000
+      );
+
+      if (stillCoolingDown) {
+        renderShop();
+        return;
+      }
+
+      if (getMoney() < item.price) {
+        showTimedNotice(
+          document.getElementById("shopNotice"),
+          "Insufficient funds, Buy Something Else",
+          3000
+        );
+        return;
+      }
+
+      setMoney(getMoney() - item.price);
+
+      const purchase = {
+        buyer: account,
+        name: item.name,
+        price: item.price,
+        date: new Date().toLocaleString(),
+        purchasedAt: now
+      };
+
+      personal.push(purchase);
+      localStorage.setItem(boughtKey(account), JSON.stringify(personal));
+
+      const allPurchases = readArray("unAdminBoughtItems");
+      allPurchases.push(purchase);
+      localStorage.setItem("unAdminBoughtItems", JSON.stringify(allPurchases));
+
+      renderShop();
+    }
+
+    function renderAdminPurchases() {
+      const list = document.getElementById("adminPurchaseList");
+      const purchases = readArray("unAdminBoughtItems");
+      list.replaceChildren();
+
+      if (!purchases.length) {
+        const row = document.createElement("li");
+        row.textContent = "No purchases yet.";
+        list.appendChild(row);
+        return;
+      }
+
+      purchases.forEach(purchase => {
+        const row = document.createElement("li");
+        row.textContent =
+          `${purchase.buyer} bought ${purchase.name} for ${purchase.price} Un's — ${purchase.date}`;
+        list.appendChild(row);
+      });
+    }
+
+    /*
+      Normal visits show the login screen.
+      The games view is restored only when a game sets a return flag.
+    */
+    const returningToGames =
+      localStorage.getItem("unReturnToGames") === "true" ||
+      localStorage.getItem("gamesLossNotice") === "true";
+
+    const savedAccount = localStorage.getItem("unCurrentAccount");
+
+    if (returningToGames && savedAccount && USERS[savedAccount]) {
+      account = savedAccount;
+
+      const lost = localStorage.getItem("gamesLossNotice") === "true";
+      localStorage.removeItem("gamesLossNotice");
+      localStorage.removeItem("unReturnToGames");
+
+      document.getElementById("adminsButton").hidden =
+        account !== "Ugochi_Enwere";
+
+      document.body.style.backgroundColor = "#89CFF0";
+      updateMoney();
+      showView("gamesView");
+
+      if (lost) {
+        showTimedNotice(
+          document.getElementById("gameNotice"),
+          "Uh Oh! You Lost",
+          2000
+        );
+      }
+    } else {
+      localStorage.removeItem("unCurrentAccount");
+      showView("loginView");
+    }
+  </script>
+</body>
+</html>
